@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конвертер JSON в SQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 8px;
+            width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 150px;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .sql-output {
+            background-color: #f4f7fa;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: Consolas, "Courier New", monospace;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Конвертер JSON в SQL</h1>
+        
+        <label for="jsonInput">Вставьте JSON сюда:</label>
+        <textarea id="jsonInput" placeholder='Пример JSON: [{"id": 0, "nameRu": "Зачисленные на других основаниях", "nameKz": "Зачисленные на других основаниях", "nameEn": "Зачисленные на других основаниях"}]' ></textarea>
+        
+        <button onclick="generateSQL()">Генерировать SQL</button>
+        
+        <h2>SQL Код:</h2>
+        <div class="sql-output">
+            <textarea id="sqlOutput" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        function generateSQL() {
+            const jsonInput = document.getElementById("jsonInput").value;
+            let jsonData;
+            
+            try {
+                jsonData = JSON.parse(jsonInput);
+            } catch (error) {
+                alert("Ошибка в формате JSON.");
+                return;
+            }
+
+            let tableName = "tableName"; // Вы можете изменить это на нужное имя таблицы
+            let sqlCreate = `CREATE TABLE ${tableName} (\n    id INT,\n    nameRu VARCHAR(512),\n    nameKz VARCHAR(512),\n    nameEn VARCHAR(512)\n);\n\n`;
+            let sqlInsert = "";
+
+            jsonData.forEach(item => {
+                sqlInsert += `INSERT INTO ${tableName} (id, nameRu, nameKz, nameEn) VALUES ('${item.id}', '${item.nameRu}', '${item.nameKz}', '${item.nameEn}');\n`;
+            });
+
+            const sqlOutput = document.getElementById("sqlOutput");
+            sqlOutput.value = sqlCreate + sqlInsert;
+        }
+    </script>
+</body>
+</html>
