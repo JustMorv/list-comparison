@@ -8,28 +8,28 @@
         /* Основной стиль страницы */
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 800px;
+            min-height: 2000px;
             margin: auto;
             padding: 20px;
             background-color: #f4f6f9;
             color: #333;
         }
-
+    
         h2 {
             text-align: center;
             color: #444;
             margin-bottom: 20px;
             font-size: 24px;
         }
-
+    
         label {
             display: block;
             margin-top: 15px;
             font-weight: bold;
             color: #444;
         }
-
-        /* Поля ввода */
+    
         input[type="text"],
         textarea {
             width: 100%;
@@ -43,14 +43,17 @@
             color: #333;
             transition: border-color 0.3s ease;
         }
-
+    
         input[type="text"]:focus,
         textarea:focus {
             border-color: #0073e6;
             outline: none;
         }
-
-        /* Кнопка */
+    
+        textarea {
+            resize: both;
+        }
+    
         button {
             margin-top: 20px;
             padding: 12px;
@@ -64,29 +67,67 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
+    
         button:hover {
             background-color: #005bb5;
         }
-
-        /* Текстовое поле результата */
-        #result {
-            background-color: #f9f9f9;
-            color: #333;
+    
+        /* Таблица в стиле Excel */
+        table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+    
+        table th,
+        table td {
             border: 1px solid #ddd;
-            resize: vertical;
-            height: 200px;
-            font-family: Consolas, monospace;
-            white-space: pre-wrap;
+            text-align: left;
+            padding: 8px;
+            font-size: 14px;
         }
-
-        /* Подсказка для пустого результата */
-        #result:empty::before {
-            content: "Здесь появится SQL-запрос";
-            color: #999;
+    
+        table th {
+            background-color: #f0f8ff; /* Светло-голубой фон заголовка */
+            border-bottom: 2px solid #0073e6;
+            font-weight: bold;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            text-align: center;
         }
-
+    
+        table td {
+            background-color: #ffffff; /* Белый фон ячеек */
+        }
+    
+        table tr:nth-child(even) td {
+            background-color: #f9f9f9; /* Полосатость строк */
+        }
+    
+        table tr:hover td {
+            background-color: #e6f7ff; /* Выделение строки при наведении */
+        }
+    
+        table th button {
+            background: none;
+            border: none;
+            color: #ff4d4f;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 2px 5px;
+            margin-left: 8px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+    
+        table th button:hover {
+            background-color: #ffccd5;
+        }
     </style>
+    
 </head>
 <body>
     <h2>Генератор SQL-запроса INSERT</h2>
@@ -97,15 +138,19 @@
     <label for="jsonInput">JSON данные:</label>
     <textarea id="jsonInput" placeholder='Введите JSON, например: [{"name": "John", "age": 30}]'></textarea>
 
-    <label for="result">Результат SQL-запроса:</label>
-    <textarea id="result" readonly placeholder="Здесь появится SQL-запрос"></textarea>
+    <button onclick="generateTable()">Сгенерировать таблицу</button>
 
-    <button onclick="generateSQL()">Сгенерировать SQL-запрос</button>
+    <label>Таблица:</label>
+    <div id="tableContainer"></div>
+
+    <label for="result">Результат SQL-запроса:</label>
+    <textarea id="result" readonly></textarea>
 
     <script>
-        function generateSQL() {
+        function generateTable() {
             const tableName = document.getElementById("tableName").value.trim();
             const jsonInput = document.getElementById("jsonInput").value.trim();
+            const tableContainer = document.getElementById("tableContainer");
             const resultArea = document.getElementById("result");
 
             if (!jsonInput) {
@@ -114,7 +159,6 @@
             }
 
             try {
-                // Обработка JSON-данных с экранированием слэшей и других спецсимволов
                 const cleanedJson = jsonInput.replace(/\s+/g, ' ').replace(/\\\//g, '/');
                 const jsonData = JSON.parse(cleanedJson);
 
@@ -123,32 +167,70 @@
                     return;
                 }
 
-                let sqlQueries = "";
+                // Создание таблицы
+                let table = "<table><thead><tr>";
+                const keys = Object.keys(jsonData[0]);
 
-                jsonData.forEach((row) => {
-                    const columns = Object.keys(row).join(", ");
-                    const values = Object.values(row).map(value => {
-                        if (value === null) {
-                            return "NULL"; // Обработка null
-                        }
-                        // Экранирование специальных символов для SQL
-                        if (typeof value === "string") {
-                            return `'${value.replace(/'/g, "''").replace(/\\/g, "\\\\")}'`;
-                        }
-                        return value;
-                    }).join(", ");
-                    
-                    const insertStatement = tableName
-                        ? `INSERT INTO ${tableName} (${columns}) VALUES (${values});\n`
-                        : `INSERT INTO (${columns}) VALUES (${values});\n`;
-
-                    sqlQueries += insertStatement;
+                keys.forEach(key => {
+                    table += `<th>${key} <button onclick="deleteColumn('${key}')">X</button></th>`;
                 });
 
-                resultArea.value = sqlQueries;
+                table += "</tr></thead><tbody>";
+
+                jsonData.forEach(row => {
+                    table += "<tr>";
+                    keys.forEach(key => {
+                        table += `<td>${row[key] !== undefined ? row[key] : ""}</td>`;
+                    });
+                    table += "</tr>";
+                });
+
+                table += "</tbody></table>";
+                tableContainer.innerHTML = table;
+
+                // Генерация SQL
+                generateSQL(jsonData, keys, tableName);
             } catch (error) {
                 resultArea.value = "Ошибка обработки JSON. Проверьте правильность данных.";
             }
+        }
+
+        function deleteColumn(column) {
+            const table = document.querySelector("table");
+            const tableName = document.getElementById("tableName").value.trim();
+            const jsonInput = document.getElementById("jsonInput").value.trim();
+            const jsonData = JSON.parse(jsonInput);
+
+            // Удаляем данные колонки из JSON
+            jsonData.forEach(row => {
+                delete row[column];
+            });
+
+            document.getElementById("jsonInput").value = JSON.stringify(jsonData, null, 2);
+            generateTable();
+        }
+
+        function generateSQL(jsonData, keys, tableName) {
+            const resultArea = document.getElementById("result");
+            let sqlQueries = "";
+
+            jsonData.forEach(row => {
+                const columns = keys.join(", ");
+                const values = keys.map(key => {
+                    const value = row[key];
+                    if (value === null) {
+                        return "NULL";
+                    }
+                    if (typeof value === "string") {
+                        return `'${value.replace(/'/g, "''").replace(/\\/g, "\\\\")}'`;
+                    }
+                    return value;
+                }).join(", ");
+
+                sqlQueries += `INSERT INTO ${tableName || "таблица"} (${columns}) VALUES (${values});\n`;
+            });
+
+            resultArea.value = sqlQueries;
         }
     </script>
 </body>
