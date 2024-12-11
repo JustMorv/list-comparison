@@ -89,7 +89,7 @@
         }
     
         table th {
-            background-color: #f0f8ff; /* Светло-голубой фон заголовка */
+            background-color: #f0f8ff;
             border-bottom: 2px solid #0073e6;
             font-weight: bold;
             color: #333;
@@ -100,15 +100,15 @@
         }
     
         table td {
-            background-color: #ffffff; /* Белый фон ячеек */
+            background-color: #ffffff;
         }
     
         table tr:nth-child(even) td {
-            background-color: #f9f9f9; /* Полосатость строк */
+            background-color: #f9f9f9;
         }
     
         table tr:hover td {
-            background-color: #e6f7ff; /* Выделение строки при наведении */
+            background-color: #e6f7ff;
         }
     
         table th button {
@@ -126,8 +126,21 @@
         table th button:hover {
             background-color: #ffccd5;
         }
+
+        pre {
+            background-color: #f4f6f9;
+            padding: 10px;
+            border: 1px solid black;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
     </style>
-    
+    <!-- Подключение Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/sql.min.js"></script>
 </head>
 <body>
     <h2>Генератор SQL-запроса INSERT</h2>
@@ -144,7 +157,7 @@
     <div id="tableContainer"></div>
 
     <label for="result">Результат SQL-запроса:</label>
-    <textarea id="result" readonly></textarea>
+    <pre><code id="result" class="language-sql"></code></pre>
 
     <script>
         function generateTable() {
@@ -154,7 +167,8 @@
             const resultArea = document.getElementById("result");
 
             if (!jsonInput) {
-                resultArea.value = "Введите JSON данные.";
+                resultArea.textContent = "Введите JSON данные.";
+                hljs.highlightElement(resultArea);
                 return;
             }
 
@@ -163,7 +177,8 @@
                 const jsonData = JSON.parse(cleanedJson);
 
                 if (!Array.isArray(jsonData) || jsonData.length === 0) {
-                    resultArea.value = "Некорректный формат JSON. Должен быть массив объектов.";
+                    resultArea.textContent = "Некорректный формат JSON. Должен быть массив объектов.";
+                    hljs.highlightElement(resultArea);
                     return;
                 }
 
@@ -191,17 +206,15 @@
                 // Генерация SQL
                 generateSQL(jsonData, keys, tableName);
             } catch (error) {
-                resultArea.value = "Ошибка обработки JSON. Проверьте правильность данных.";
+                resultArea.textContent = "Ошибка обработки JSON. Проверьте правильность данных.";
+                hljs.highlightElement(resultArea);
             }
         }
 
         function deleteColumn(column) {
-            const table = document.querySelector("table");
-            const tableName = document.getElementById("tableName").value.trim();
             const jsonInput = document.getElementById("jsonInput").value.trim();
             const jsonData = JSON.parse(jsonInput);
 
-            // Удаляем данные колонки из JSON
             jsonData.forEach(row => {
                 delete row[column];
             });
@@ -230,7 +243,8 @@
                 sqlQueries += `INSERT INTO ${tableName || "таблица"} (${columns}) VALUES (${values});\n`;
             });
 
-            resultArea.value = sqlQueries;
+            resultArea.textContent = sqlQueries;
+            hljs.highlightElement(resultArea);
         }
     </script>
 </body>
